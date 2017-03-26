@@ -190,7 +190,7 @@ public class GoogleAPITracker extends Service implements LocationListener {
         try {
             if (checkPlayServices()) {
                 Toast.makeText(this.context, "Pencarian Dimulai", Toast.LENGTH_SHORT).show();
-                dataIteration = new String[1][2];
+                dataIteration = new String[10][8];
                 clearListData();
                 startAPI();
                 requestUpdateLocation(this);
@@ -364,7 +364,85 @@ public class GoogleAPITracker extends Service implements LocationListener {
     }
 
     private void KNN() {
-        
+        double tempDistance;
+        String[][] result = new String[10][3];
+        boolean isCounter = true;
+        int counter = 0;
+        String[] tempData;
+        Location loc1, loc2;
+
+        for (int i = 0; i < dataIteration.length; i++) {
+            tempData = new String[3];
+            loc1 = new Location("");
+            loc1.setLongitude(Double.parseDouble(dataIteration[i][1]));
+            loc1.setLatitude(Double.parseDouble(dataIteration[i][2]));
+
+            for (int j = 0; j < dataLength; j++) {
+                loc2 = new Location("");
+                loc2.setLatitude(Double.parseDouble(dataPlaces[j][2]));
+                loc2.setLongitude(Double.parseDouble(dataPlaces[j][3]));
+                tempDistance = loc1.distanceTo(loc2);
+                if (tempData[0] == null) {
+                    tempData[0] = Double.toString(tempDistance);
+                    tempData[1] = dataPlaces[j][0];
+                    tempData[2] = dataPlaces[j][1];
+                }
+                else if (tempDistance < Double.parseDouble(tempData[0])) {
+                    tempData[0] = Double.toString(tempDistance);
+                    tempData[1] = dataPlaces[j][0];
+                    tempData[2] = dataPlaces[j][1];
+                }
+            }
+            dataIteration[i][5] = tempData[0];
+            dataIteration[i][6] = tempData[1];
+            dataIteration[i][7] = tempData[2];
+
+            if (isCounter) {
+                result[0][0] = dataIteration[i][6];
+                result[0][1] = dataIteration[i][7];
+                result[0][2] = Integer.toString(1);
+                isCounter = false;
+                counter++;
+            }
+            else {
+                boolean available = false;
+                for (int j = 0; j < counter; j++) {
+                    if (result[j][1].equals(dataIteration[i][6])) {
+                        int tempCounter = Integer.parseInt(result[j][2])+1;
+                        result[j][2] = Integer.toString(tempCounter);
+                        available = true;
+                        break;
+                    }
+                }
+                if (!available) {
+                    result[counter][0] = dataIteration[i][6];
+                    result[counter][1] = dataIteration[i][7];
+                    result[counter][2] = Integer.toString(1);
+                    counter++;
+                }
+            }
+        }
+        int temp1 = 0, temp2 = 0;
+        temp1 = Integer.parseInt(result[0][2]);
+        String placeResult = result[0][1];
+        for (int i = 1; i < 10; i++) {
+            temp2 = Integer.parseInt(result[i][2]);
+            if (temp2 > temp1) {
+                placeResult = result[i][1];
+            }
+        }
+
+        setListDataAndResult(placeResult);
+    }
+
+    private void setListDataAndResult(String result) {
+        for (int i = 0; i < dataIteration.length; i++) {
+            data.add("ID: " + dataIteration[i][0] + "\nLongitude: " + dataIteration[i][1] + "\nLatitude: " +
+                    dataIteration[i][2] + "\nAltitude: " + dataIteration[i][3] + "\nAccuracy: " + dataIteration[i][4] +
+                    "\nDistance: " + dataIteration[i][5] + "\nPlace: " + dataIteration[i][7]);
+        }
+        arrayAdapter.notifyDataSetChanged();
+        textView.setText(result);
     }
 
     @Nullable
@@ -381,37 +459,22 @@ public class GoogleAPITracker extends Service implements LocationListener {
         this.altitude = location.getAltitude();
         Log.d("Data", "Longitude: " + getLongitude() + "\nLatitude: " +
                 getLatitude() + "\nAccuracy: " + getAccuracy() + "\nAltitude: " + getAltitude());
-        if(this.accuracy <= 8) {
-            if (iteration < 5) {
-                String tempAddress = calculateAddress(getLatitude(), getLongitude());
-                double tempDistance = Double.parseDouble(calculateDistance(getLatitude(), getLongitude()));
-                if (dataIteration[0][0] == null) {
-                    dataIteration[0][0] = tempAddress;
-                    dataIteration[0][1] = Double.toString(tempDistance);
-                }
-                else {
-                    double temp2 = Double.parseDouble(dataIteration[0][1]);
-                    if (tempDistance < temp2) {
-                        dataIteration[0][0] = tempAddress;
-                        dataIteration[0][1] = Double.toString(tempDistance);
-                    }
-                }
-
-                if (tempAddress != null) {
-                    data.add("Longitude: " + getLongitude() + "\nLatitude: " +
-                            getLatitude() + "\nAccuracy: " + getAccuracy() + "\nAltitude: " + getAltitude() +
-                            "\nPlace: " + tempAddress + "\nDistance: " + tempDistance);
-                }
-                else {
-                    data.add("Longitude: " + getLongitude() + "\nLatitude: " +
-                            getLatitude() + "\nAccuracy: " + getAccuracy() + "\nAltitude: " + getAltitude() +
-                            calculateAddress(getLatitude(), getLongitude()));
-                }
-                arrayAdapter.notifyDataSetChanged();
+        if(this.accuracy <= 10) {
+            if (iteration < 10) {
+                int i = 0;
+                dataIteration[iteration][i] = Integer.toString(iteration + 1);
+                i++;
+                dataIteration[iteration][i] = Double.toString(getLongitude());
+                i++;
+                dataIteration[iteration][i] = Double.toString(getLatitude());
+                i++;
+                dataIteration[iteration][i] = Double.toString(getAltitude());
+                i++;
+                dataIteration[iteration][i] = Double.toString(getAccuracy());
                 iteration++;
             }
             else {
-                textView.setText(dataIteration[0][0]);
+                KNN();
                 Toast.makeText(this.context, "Pencarian Selesai", Toast.LENGTH_SHORT).show();
                 stopUsingAPI();
             }

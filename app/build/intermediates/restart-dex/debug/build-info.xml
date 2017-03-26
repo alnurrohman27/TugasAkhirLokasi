@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<instant-run
+    abi="arm64-v8a,armeabi-v7a,armeabi"
+    api-level="22"
+    density="xhdpi"
+    format="8"
+    plugin-version="2.2.3"
+    timestamp="709860706620744"
+    token="-2683290084812137833"
+    verifier="COLD_SWAP_REQUESTED" >
+
+    <task
+        name="javac"
+        duration="0" />
+    <task
+        name="instant-run-dex"
+        duration="0" />
+    <task
+        name="instant-run-transform"
+        duration="0" />
+    <task
+        name="verifier"
+        duration="0" />
+
+    <build
+        timestamp="708427820046648"
+        verifier="FULL_BUILD_REQUESTED" >
+        <artifact
+            location="D:\Document\Informatics Engineering - S1\Chapter 8\TA\TugasAkhirLokasi\app\build\outputs\apk\app-debug.apk"
+            type="MAIN" />
+    </build>
+    <build
+        timestamp="709478739235778"
+        verifier="COLD_SWAP_REQUESTED" >
+        <artifact
+            location="D:\Document\Informatics Engineering - S1\Chapter 8\TA\TugasAkhirLokasi\app\build\intermediates\transforms\dex\debug\folders\1000\5\slice_9\classes.dex"
+            type="DEX" />
+    </build>
+    <build
+        timestamp="709860706620744"
+        verifier="COLD_SWAP_REQUESTED" />
+
+</instant-run>
