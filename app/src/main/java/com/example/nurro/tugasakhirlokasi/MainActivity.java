@@ -26,6 +26,8 @@ import android.widget.Toast;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.google.android.gms.internal.zzip.runOnUiThread;
+
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
@@ -107,7 +109,6 @@ public class MainActivity extends AppCompatActivity
     public boolean onNavigationItemSelected(MenuItem item) {
         // Handle navigation view item clicks here.
         int id = item.getItemId();
-        FragmentManager fragmentManager = getFragmentManager();
 
         if (id == R.id.nav_location) {
             if (activeFragment != null && activeFragment.equals("API")) {
@@ -116,20 +117,12 @@ public class MainActivity extends AppCompatActivity
 
                 activeFragment = "GPS";
                 this.fragment = new GPSFragment();
-                fragmentManager.beginTransaction()
-                        .addToBackStack(null)
-                        .replace(R.id.content_main, fragment, "GPS")
-                        .setTransition(fragmentManager.beginTransaction().TRANSIT_FRAGMENT_FADE)
-                        .commit();
+                createFragment();
             }
             else if (activeFragment == null || activeFragment.equals("LIST")) {
                 activeFragment = "GPS";
                 this.fragment = new GPSFragment();
-                fragmentManager.beginTransaction()
-                        .addToBackStack(null)
-                        .replace(R.id.content_main, fragment, "GPS")
-                        .setTransition(fragmentManager.beginTransaction().TRANSIT_FRAGMENT_FADE)
-                        .commit();
+                createFragment();
             }
         }
         else if (id == R.id.nav_google_location) {
@@ -139,20 +132,12 @@ public class MainActivity extends AppCompatActivity
 
                 activeFragment = "API";
                 this.fragment = new GoogleAPIFragment();
-                fragmentManager.beginTransaction()
-                        .addToBackStack(null)
-                        .replace(R.id.content_main, fragment, "API")
-                        .setTransition(fragmentManager.beginTransaction().TRANSIT_FRAGMENT_FADE)
-                        .commit();
+                createFragment();
             }
             else if (activeFragment == null  || activeFragment.equals("LIST")) {
                 activeFragment = "API";
                 this.fragment = new GoogleAPIFragment();
-                fragmentManager.beginTransaction()
-                        .addToBackStack(null)
-                        .replace(R.id.content_main, fragment, "API")
-                        .setTransition(fragmentManager.beginTransaction().TRANSIT_FRAGMENT_FADE)
-                        .commit();
+                createFragment();
             }
         }
 
@@ -167,16 +152,22 @@ public class MainActivity extends AppCompatActivity
             }
             activeFragment = "LIST";
             this.fragment = new PlacesFragment();
-            fragmentManager.beginTransaction()
-                    .addToBackStack(null)
-                    .replace(R.id.content_main, fragment, "LIST")
-                    .setTransition(fragmentManager.beginTransaction().TRANSIT_FRAGMENT_FADE)
-                    .commit();
+            createFragment();
+
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    private void createFragment() {
+        FragmentManager fragmentManager = getFragmentManager();
+        fragmentManager.beginTransaction()
+                .addToBackStack(null)
+                .replace(R.id.content_main, this.fragment, activeFragment)
+                .setTransition(fragmentManager.beginTransaction().TRANSIT_FRAGMENT_FADE)
+                .commit();
     }
 
 }

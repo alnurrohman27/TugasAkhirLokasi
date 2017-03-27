@@ -5,7 +5,7 @@
     density="xhdpi"
     format="8"
     plugin-version="2.2.3"
-    timestamp="709860706620744"
+    timestamp="771390843474543"
     token="-2683290084812137833"
     verifier="COLD_SWAP_REQUESTED" >
 
@@ -23,21 +23,21 @@
         duration="0" />
 
     <build
-        timestamp="708427820046648"
+        timestamp="761224785567323"
         verifier="FULL_BUILD_REQUESTED" >
         <artifact
             location="D:\Document\Informatics Engineering - S1\Chapter 8\TA\TugasAkhirLokasi\app\build\outputs\apk\app-debug.apk"
             type="MAIN" />
     </build>
     <build
-        timestamp="709478739235778"
+        timestamp="771233412157442"
         verifier="COLD_SWAP_REQUESTED" >
         <artifact
             location="D:\Document\Informatics Engineering - S1\Chapter 8\TA\TugasAkhirLokasi\app\build\intermediates\transforms\dex\debug\folders\1000\5\slice_9\classes.dex"
             type="DEX" />
     </build>
     <build
-        timestamp="709860706620744"
+        timestamp="771390843474543"
         verifier="COLD_SWAP_REQUESTED" />
 
 </instant-run>

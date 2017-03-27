@@ -54,6 +54,8 @@ import com.google.android.gms.location.LocationServices;
 import org.json.JSONArray;
 import org.w3c.dom.Text;
 
+import static com.google.android.gms.internal.zzip.runOnUiThread;
+
 
 /**
  * Created by nurro on 3/3/2017.
@@ -61,7 +63,7 @@ import org.w3c.dom.Text;
 
 public class GoogleAPITracker extends Service implements LocationListener {
     //Variable for Context
-    private final Context context;
+    private Context context;
 
     //Variable for TextView
     private TextView textView;
@@ -100,18 +102,44 @@ public class GoogleAPITracker extends Service implements LocationListener {
     private int dataLength;
     private String[][] dataIteration;
 
-    public GoogleAPITracker(Context context, TextView textView, ListView myList, ArrayList<String> data) {
+    private void setContext(Context context) {
         this.context = context;
+    }
+    private void setTextView(TextView textView) {
         this.textView = textView;
+    }
+    private void setMyListAdapter(ListView myList) {
         this.myList = myList;
-        this.arrayAdapter = (ArrayAdapter<String>)myList.getAdapter();
+        this.arrayAdapter = (ArrayAdapter<String>)this.myList.getAdapter();
+    }
+    private void setArrayAdapter(Context context) {
+        this.context = context;
+    }
+    private void setData(ArrayList<String> data) {
         this.data = data;
-        getPlaces();
+    }
+
+    public GoogleAPITracker(final Context context2, final TextView textView2, final ListView myList2, final ArrayList<String> data2) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                setContext(context2);
+                setTextView(textView2);
+                setMyListAdapter(myList2);
+                setData(data2);
+                getPlaces();
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        getLocation();
+                    }
+                });
+            }
+        }).start();
     }
 
     private boolean checkPlayServices() {
         int result = GooglePlayServicesUtil.isGooglePlayServicesAvailable(this.context);
-        Log.d("Result Check", Integer.toString(result));
         if (result != ConnectionResult.SUCCESS) {
             if (GooglePlayServicesUtil.isUserRecoverableError(result)) {
                 Toast.makeText(this.context,
@@ -128,7 +156,7 @@ public class GoogleAPITracker extends Service implements LocationListener {
         return true;
     }
 
-    private boolean isGoogleApiClientConnected() {
+    public boolean isGoogleApiClientConnected() {
         return googleApiClient != null && googleApiClient.isConnected();
     }
 
@@ -191,6 +219,7 @@ public class GoogleAPITracker extends Service implements LocationListener {
             if (checkPlayServices()) {
                 Toast.makeText(this.context, "Pencarian Dimulai", Toast.LENGTH_SHORT).show();
                 dataIteration = new String[10][8];
+                this.iteration = 0;
                 clearListData();
                 startAPI();
                 requestUpdateLocation(this);
@@ -228,6 +257,7 @@ public class GoogleAPITracker extends Service implements LocationListener {
     }
 
     public void stopUsingAPI() {
+        Toast.makeText(this.context, "Pencarian Selesai", Toast.LENGTH_SHORT).show();
         if (googleApiClient != null) {
             googleApiClient.disconnect();
         }
@@ -286,153 +316,88 @@ public class GoogleAPITracker extends Service implements LocationListener {
         }
     }
 
-    public void getAddress(double lat, double lng) {
-        Geocoder geocoder = new Geocoder(this.context, Locale.getDefault());
-        try {
-            List<Address> addresses = geocoder.getFromLocation(lat, lng, 1);
-            Address obj = addresses.get(0);
-            String add = obj.getAddressLine(0);
-            textView.setText(add);
-
-            add = add + "\n" + obj.getCountryName();
-            add = add + "\n" + obj.getCountryCode();
-            add = add + "\n" + obj.getAdminArea();
-            add = add + "\n" + obj.getPostalCode();
-            add = add + "\n" + obj.getSubAdminArea();
-            add = add + "\n" + obj.getLocality();
-            add = add + "\n" + obj.getSubThoroughfare();
-
-            Log.v("Address", add);
-
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-            Toast.makeText(this.context, e.getMessage(), Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    public String calculateAddress(double lat, double lng) {
-        double[] distancesInMeters = new double[dataLength];
-        String[] namePlace = new String[dataLength];
-        Location loc1 = new Location("");
-        loc1.setLatitude(lat);
-        loc1.setLongitude(lng);
-        Location loc2 = new Location("");
-        for (int i = 0; i < dataLength; i++) {
-            loc2.setLatitude(Double.parseDouble(dataPlaces[i][2]));
-            loc2.setLongitude(Double.parseDouble(dataPlaces[i][3]));
-            distancesInMeters[i] = loc1.distanceTo(loc2);
-            namePlace[i] = dataPlaces[i][1];
-        }
-        for (int i = 0; i < dataLength-1; i++) {
-            for (int j = 1; j < dataLength; j++) {
-                if (distancesInMeters[j] < distancesInMeters[i]) {
-                    double temp = distancesInMeters[i];
-                    distancesInMeters[i] = distancesInMeters[j];
-                    distancesInMeters[j] = temp;
-
-                    String temp2 = namePlace[i];
-                    namePlace[i] = namePlace[j];
-                    namePlace[j] = temp2;
-                }
-            }
-        }
-        return namePlace[0];
-    }
-
-    public String calculateDistance(double lat, double lng) {
-        double[] distancesInMeters = new double[dataLength];
-        Location loc1 = new Location("");
-        loc1.setLatitude(lat);
-        loc1.setLongitude(lng);
-        Location loc2 = new Location("");
-        for (int i = 0; i < dataLength; i++) {
-            loc2.setLatitude(Double.parseDouble(dataPlaces[i][2]));
-            loc2.setLongitude(Double.parseDouble(dataPlaces[i][3]));
-            distancesInMeters[i] = loc1.distanceTo(loc2);
-        }
-        for (int i = 0; i < dataLength-1; i++) {
-            for (int j = 1; j < dataLength; j++) {
-                if (distancesInMeters[j] < distancesInMeters[i]) {
-                    double temp = distancesInMeters[i];
-                    distancesInMeters[i] = distancesInMeters[j];
-                    distancesInMeters[j] = temp;
-                }
-            }
-        }
-        return Double.toString(distancesInMeters[0]);
-    }
-
     private void KNN() {
-        double tempDistance;
+        double tempDistance, tempAltitude;
         String[][] result = new String[10][3];
-        boolean isCounter = true;
         int counter = 0;
         String[] tempData;
         Location loc1, loc2;
 
-        for (int i = 0; i < dataIteration.length; i++) {
+        for (int i = 0; i < iteration; i++) {
             tempData = new String[3];
             loc1 = new Location("");
             loc1.setLongitude(Double.parseDouble(dataIteration[i][1]));
             loc1.setLatitude(Double.parseDouble(dataIteration[i][2]));
-
+            tempAltitude = Double.parseDouble(dataIteration[i][3]);
             for (int j = 0; j < dataLength; j++) {
                 loc2 = new Location("");
                 loc2.setLatitude(Double.parseDouble(dataPlaces[j][2]));
                 loc2.setLongitude(Double.parseDouble(dataPlaces[j][3]));
                 tempDistance = loc1.distanceTo(loc2);
-                if (tempData[0] == null) {
+                if (tempData[0] == null && tempAltitude != 0 && tempAltitude < Double.parseDouble(dataPlaces[j][5])) {
                     tempData[0] = Double.toString(tempDistance);
                     tempData[1] = dataPlaces[j][0];
                     tempData[2] = dataPlaces[j][1];
                 }
-                else if (tempDistance < Double.parseDouble(tempData[0])) {
-                    tempData[0] = Double.toString(tempDistance);
-                    tempData[1] = dataPlaces[j][0];
-                    tempData[2] = dataPlaces[j][1];
-                }
-            }
-            dataIteration[i][5] = tempData[0];
-            dataIteration[i][6] = tempData[1];
-            dataIteration[i][7] = tempData[2];
-
-            if (isCounter) {
-                result[0][0] = dataIteration[i][6];
-                result[0][1] = dataIteration[i][7];
-                result[0][2] = Integer.toString(1);
-                isCounter = false;
-                counter++;
-            }
-            else {
-                boolean available = false;
-                for (int j = 0; j < counter; j++) {
-                    if (result[j][1].equals(dataIteration[i][6])) {
-                        int tempCounter = Integer.parseInt(result[j][2])+1;
-                        result[j][2] = Integer.toString(tempCounter);
-                        available = true;
-                        break;
+                else if (tempData[0] != null && tempAltitude != 0 && tempAltitude < Double.parseDouble(dataPlaces[j][5])) {
+                    if (tempDistance < Double.parseDouble(tempData[0])) {
+                        tempData[0] = Double.toString(tempDistance);
+                        tempData[1] = dataPlaces[j][0];
+                        tempData[2] = dataPlaces[j][1];
                     }
                 }
-                if (!available) {
-                    result[counter][0] = dataIteration[i][6];
-                    result[counter][1] = dataIteration[i][7];
-                    result[counter][2] = Integer.toString(1);
-                    counter++;
+                else {
+                    dataIteration[i][5] = Integer.toString(0);
+                    dataIteration[i][6] = Integer.toString(0);
+                    dataIteration[i][7] = Integer.toString(0);
                 }
+            }
+            if (tempData[0] != null) {
+                dataIteration[i][5] = tempData[0];
+                dataIteration[i][6] = tempData[1];
+                dataIteration[i][7] = tempData[2];
+            }
+
+            boolean available = false;
+            for (int j = 0; j < counter; j++) {
+                if (result[j][0].equals(dataIteration[i][6])) {
+                    int tempCounter = Integer.parseInt(result[j][2])+1;
+                    result[j][2] = Integer.toString(tempCounter);
+                    available = true;
+                    Log.d("Result " + Integer.toString(i + 1), result[j][1] + " n: " + result[j][2]);
+                    Log.d("Data Iteration " + Integer.toString(i + 1), dataIteration[i][6]);
+                    break;
+                }
+            }
+            if (!available) {
+                result[counter][0] = dataIteration[i][6];
+                result[counter][1] = dataIteration[i][7];
+                result[counter][2] = Integer.toString(1);
+                Log.d("Result " + Integer.toString(i + 1), result[counter][1] + " n: " + result[counter][2]);
+                Log.d("Data Iteration " + Integer.toString(i + 1), dataIteration[i][6]);
+                counter++;
             }
         }
         int temp1 = 0, temp2 = 0;
+        int idResult = 0;
         temp1 = Integer.parseInt(result[0][2]);
+        idResult = Integer.parseInt(result[0][0]);
         String placeResult = result[0][1];
-        for (int i = 1; i < 10; i++) {
+        for (int i = 1; i < counter; i++) {
             temp2 = Integer.parseInt(result[i][2]);
             if (temp2 > temp1) {
+                temp1 = Integer.parseInt(result[i][2]);
+                idResult = Integer.parseInt(result[i][0]);
                 placeResult = result[i][1];
             }
         }
-
-        setListDataAndResult(placeResult);
+        Log.d("ID: " + idResult, placeResult);
+        if (idResult == 0) {
+            setListDataAndResult("Tidak Diketahui");
+        }
+        else {
+            setListDataAndResult(placeResult);
+        }
     }
 
     private void setListDataAndResult(String result) {
@@ -475,7 +440,6 @@ public class GoogleAPITracker extends Service implements LocationListener {
             }
             else {
                 KNN();
-                Toast.makeText(this.context, "Pencarian Selesai", Toast.LENGTH_SHORT).show();
                 stopUsingAPI();
             }
         }

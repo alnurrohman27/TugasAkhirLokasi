@@ -3,6 +3,7 @@ package com.example.nurro.tugasakhirlokasi;
 import android.app.Fragment;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Looper;
 import android.os.StrictMode;
 import android.support.annotation.Nullable;
 import android.text.Editable;
@@ -18,6 +19,8 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 
+import static com.google.android.gms.internal.zzip.runOnUiThread;
+
 /**
  * Created by nurro on 3/4/2017.
  */
@@ -30,6 +33,7 @@ public class GoogleAPIFragment extends Fragment {
     Button searchAPIButton;
     GoogleAPITracker googleAPI;
     TextView textView;
+    boolean enableButton = false;
 
     @Nullable
     @Override
@@ -47,16 +51,17 @@ public class GoogleAPIFragment extends Fragment {
         searchAPIButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View arg0) {
-                // create class object
                 if(googleAPI == null) {
-                    // Create an ArrayAdapter from List
                     googleAPI = new GoogleAPITracker(myView.getContext(), textView, myList, data);
-                    googleAPI.getLocation();
                 }
                 else {
-                    Log.d("Finish", "Finish API");
-                    googleAPI.stopUsingAPI();
-                    googleAPI = null;
+                    if (!googleAPI.isGoogleApiClientConnected()) {
+                        googleAPI.getLocation();
+                    }
+                    else {
+                        Log.d("Finish", "Finish API");
+                        googleAPI.stopUsingAPI();
+                    }
                 }
             }
         });
